@@ -272,7 +272,7 @@ drugs <- unlist(strsplit(patient_all$otherDrugs, ";"))
 drugs <- unlist(strsplit(drugs, ","))
 remove <- c(NA, 'NA', '')
 drugs <- drugs[! drugs %in% remove]
-drugs <- gsub(" AND ","", drugs)
+drugs <- unlist(strsplit(drugs, " AND "))
 drugs <- trimws(drugs, which = "left")
 
 drugs <- as.data.frame(drugs)
