@@ -431,3 +431,48 @@ hist(plot$age, breaks=80)
 sapply(df, function(x) sum(is.na(x))/nrow(df))
 
 patient_all <- df
+
+  
+  
+####################################################
+###         Standarizing dosage interval        ####
+####################################################
+  
+drugFinal_all[,c(6:12)] <- sapply(drugFinal_all[,c(6:12)], as.numeric)
+patient_all$patientweight <- as.numeric(patient_all$patientweight)
+drugFinal_all[is.na(drugFinal_all)] <- -3
+
+drugFinal_all$dosage <- ifelse(drugFinal_all$drugintervaldosagedefinition == 801, drugFinal_all$drugintervaldosageunitnumb*365, drugFinal_all$drugintervaldosageunitnumb)
+drugFinal_all$dosage <- ifelse(drugFinal_all$drugintervaldosagedefinition == 802, drugFinal_all$drugintervaldosageunitnumb*30, drugFinal_all$dosage)
+drugFinal_all$dosage <- ifelse(drugFinal_all$drugintervaldosagedefinition == 803, drugFinal_all$drugintervaldosageunitnumb*7, drugFinal_all$dosage)
+drugFinal_all$dosage <- ifelse(drugFinal_all$drugintervaldosagedefinition == 805, drugFinal_all$drugintervaldosageunitnumb/24, drugFinal_all$dosage)
+drugFinal_all$dosage <- ifelse(drugFinal_all$drugintervaldosagedefinition == 807, drugFinal_all$drugintervaldosageunitnumb*90, drugFinal_all$dosage)
+drugFinal_all$dosage <- ifelse(drugFinal_all$drugintervaldosagedefinition == 811, drugFinal_all$drugintervaldosageunitnumb*90, drugFinal_all$dosage)
+drugFinal_all$dosage <- ifelse(drugFinal_all$drugintervaldosagedefinition == 812, -1, drugFinal_all$dosage)
+drugFinal_all$dosage <- ifelse(drugFinal_all$drugintervaldosagedefinition == 813, -2, drugFinal_all$dosage)
+
+ssri5 <- c("ESCITALOPRAM_dosage","CITALOPRAM_dosage","FLUOXETINE_dosage","PAXIL_dosage","SERTRALINE_dosage")
+patient_all[, ssri5] <- 0
+for (i in 1:nrow(drugFinal_all)){
+  if (str_detect(drugFinal_all$medicinalproduct[i], "ESCITALOPRAM") == TRUE | str_detect(drugFinal_all$generic_name[i], "ESCITALOPRAM") == TRUE){
+    patient_all[patient_all$index == drugFinal_all$index[i], "ESCITALOPRAM_dosage"] <- drugFinal_all$dosage[i]
+  }else if (str_detect(drugFinal_all$medicinalproduct[i], "CITALOPRAM") == TRUE | str_detect(drugFinal_all$generic_name[i], "CITALOPRAM") == TRUE){
+    patient_all[patient_all$index == drugFinal_all$index[i], "CITALOPRAM_dosage"] <- drugFinal_all$dosage[i]
+  }else if (str_detect(drugFinal_all$medicinalproduct[i], "FLUOXETINE") == TRUE | str_detect(drugFinal_all$generic_name[i], "FLUOXETINE") == TRUE){
+    patient_all[patient_all$index == drugFinal_all$index[i], "FLUOXETINE_dosage"] <- drugFinal_all$dosage[i]
+  }else if (str_detect(drugFinal_all$medicinalproduct[i], "PAXIL") == TRUE | str_detect(drugFinal_all$generic_name[i], "PAXIL") == TRUE){
+    patient_all[patient_all$index == drugFinal_all$index[i], "PAXIL_dosage"] <- drugFinal_all$dosage[i]
+  }else if (str_detect(drugFinal_all$medicinalproduct[i], "SERTRALINE") == TRUE | str_detect(drugFinal_all$generic_name[i], "SERTRALINE") == TRUE){
+    patient_all[patient_all$index == drugFinal_all$index[i], "SERTRALINE_dosage"] <- drugFinal_all$dosage[i]
+  }
+}
+
+patient_all <- patient_all[patient_all$patientweight <= 250 & patient_all$patientweight >= 25, ]
+
+
+plot(patient_all$age, patient_all$patientweight)
+abline(h = 25)
+
+temp <- patient_all[patient_all$patientweight < 25 & !is.na(patient_all$patientweight), ]
+plot(temp$age, temp$patientweight)
+
