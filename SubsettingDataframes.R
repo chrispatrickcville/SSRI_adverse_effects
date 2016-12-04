@@ -100,6 +100,12 @@ for (i in ssri){
   assign(dfName, df[df[i]=="1",vars])
 }
 
+#######################
+### Save Dataframes ###
+#######################
+rm(patient, patient_all, patient_all2, drugs, drugs_most_freq, drugFinal_all, df)
+save.image(file="modelDataframes.RData")
+
 ###################################################################
 ###
 ### CHECKS
