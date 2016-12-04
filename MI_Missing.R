@@ -33,3 +33,9 @@ patient_all2$patientsex <- as.factor(patient_all2$patientsex)
 imp.patient <- mice(data=patient_all2, m=10, method = "pmm")
 
 imputed_patients<-complete(imp.patient,1)
+
+#putting the index back into imputed_patients 
+imputed_patients$index <- patient_all$index
+imputed_patients2 <- imputed_patients[,c(75,1:74)]
+imputed_patients<-imputed_patients2
+rm(imputed_patients2)
