@@ -53,6 +53,12 @@ df$level <- ifelse(df$seriousnessdeath == 1, "death", df$level)
 df$level <- ifelse(df$seriousnessother == 1 & is.na(df$level), "other", df$level)
 table(df$level)
 
+### Convert level to Factor
+df$level <- as.factor(df$level)
+
+### Relevel so that "death" (variable of primary interest) is baseline
+df$level <- relevel(df$level, ref="death")
+
 #######################################
 ### Split into Training and Testing ###
 #######################################
