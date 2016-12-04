@@ -107,3 +107,10 @@ for (i in ssri){
 df <- total
 sum(!is.na(df$level))
 
+sum(nrow(multiTrain_CITALOPRAM),nrow(multiTrain_ESCITALOPRAM),nrow(multiTrain_FLUOXETINE),nrow(multiTrain_PAXIL),nrow(multiTrain_SERTRALINE))
+sum(nrow(multiTest_CITALOPRAM),nrow(multiTest_ESCITALOPRAM),nrow(multiTest_FLUOXETINE),nrow(multiTest_PAXIL),nrow(multiTest_SERTRALINE))
+83136 + 20850
+
+sum(nrow(binaryTrain_CITALOPRAM),nrow(binaryTrain_ESCITALOPRAM),nrow(binaryTrain_FLUOXETINE),nrow(binaryTrain_PAXIL),nrow(binaryTrain_SERTRALINE))
+sum(nrow(binaryTest_CITALOPRAM),nrow(binaryTest_ESCITALOPRAM),nrow(binaryTest_FLUOXETINE),nrow(binaryTest_PAXIL),nrow(binaryTest_SERTRALINE))
+115947 + 28990
