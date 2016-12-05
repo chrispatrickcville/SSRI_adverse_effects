@@ -342,3 +342,102 @@ SERTRALINE_recall
 #######################
 ###   FLUOXETINE    ### 
 #######################
+
+############################ Binary  ############################
+### Train the 'LASSO'
+binaryTrain_FLUOXETINE.m <- as.matrix(binaryTrain_FLUOXETINE)
+binaryTrain_FLUOXETINE.lasso <- glmnet(binaryTrain_FLUOXETINE.m [,-c(56)], binaryTrain_FLUOXETINE.m [,c(56)], alpha=1, family="binomial")
+plot(binaryTrain_FLUOXETINE.lasso, xvar="lambda", label=TRUE)
+
+### Predict on Testing Set 
+# NAIVE model predicts the most frequent level 
+table(binaryTrain_FLUOXETINE$serious)
+sum(binaryTest_FLUOXETINE$serious=='1')/nrow(binaryTest_FLUOXETINE) # = 0.8190158
+dummy <- binaryTest_FLUOXETINE
+dummy$serious <- NULL
+dummy$predict <- NULL
+dummy.m <- data.matrix(dummy)
+
+## Pick a lambda to explore
+x <- -5 # Also looked at -7.5, -4.5, -4
+# Predict (with s=x)
+binaryTest_FLUOXETINE$predict <- predict(binaryTrain_FLUOXETINE.lasso, newx=dummy.m, s=exp(x), family="binomial", type="class")
+
+# Check accuracy of predictions
+sum( binaryTest_FLUOXETINE$serious == binaryTest_FLUOXETINE$predict ) / nrow( binaryTest_FLUOXETINE )
+table(binaryTest_FLUOXETINE$predict)
+table(binaryTest_FLUOXETINE$serious)
+
+### Check coefficients 
+coef(binaryTrain_FLUOXETINE.lasso, s=exp(x))
+
+#######
+
+# Model with best lambda
+binaryTrain_FLUOXETINE.m <- as.matrix(binaryTrain_FLUOXETINE)
+probs <- predict(binaryTrain_FLUOXETINE.lasso, newx=dummy.m, s=exp(x), family="binomial", type = "response")
+length(binaryTest_FLUOXETINE$serious)
+length(probs)
+# ROCR prediction object and extract ROC curve and AUC
+prediction <- prediction(probs, binaryTest_FLUOXETINE$serious)
+roc.curve <- performance(prediction,"tpr","fpr")
+auc = performance(prediction, "auc")@y.values[[1]]
+# plot
+plot(roc.curve, main = paste("ROC (AUC=", round(auc,2), ")", sep=""))
+abline(0, 1, lty="dashed")
+
+#######
+
+## Lambda = -7.5, accuracy = 0.8128996, AUC = 0.71
+## Lambda = -5, accuracy = 0.8154017, AUC = 0.71 ***
+## Lambda = -4.5, accuracy = 0.8190158, , AUC = 0.7
+## Lambda = -4, accuracy = 0.8190158, AUC = 0.68
+
+
+############################ Multi  ############################
+# Train the 'LASSO'
+multiTrain_FLUOXETINE.m <- as.matrix(multiTrain_FLUOXETINE)
+multiTrain_FLUOXETINE.lasso <- glmnet(multiTrain_FLUOXETINE.m [,-c(56)], multiTrain_FLUOXETINE.m [,c(56)], alpha=1, family="multinomial")
+plot(multiTrain_FLUOXETINE.lasso ,xvar="lambda",label=TRUE)
+
+### Predict on Testing Set
+# NAIVE model predicts the most frequent level  
+table(multiTrain_FLUOXETINE$level)
+sum(multiTest_FLUOXETINE$level=='other')/nrow(multiTest_FLUOXETINE) # = 0.3487
+
+dummy <- multiTest_FLUOXETINE
+dummy$level <- NULL
+dummy$predict <- NULL
+dummy.m <- data.matrix(dummy)
+
+## Pick a lambda to explore
+x <- -8 # Also looked at -8.5, -7.5, -6, -5
+multiTest_FLUOXETINE$predict <- predict(multiTrain_FLUOXETINE.lasso, newx=dummy.m, s=exp(x), family="multinomial", type="class")
+
+# Check accuracy of predictions
+sum(multiTest_FLUOXETINE$level==multiTest_FLUOXETINE$predict)/nrow(multiTest_FLUOXETINE)
+table(multiTest_FLUOXETINE$predict)
+
+## Lambda = -8.5, accuracy = 0.434976
+## Lambda = -8, accuracy = 0.4366872 ***
+## Lambda = -7.5, accuracy = 0.436345
+## Lambda = -6, accuracy = 0.4315537
+## Lambda = -5, accuracy = 0.426078
+
+# Check coefficients 
+options(scipen=999)
+coef(multiTrain_FLUOXETINE.lasso, s=exp(x))$death
+
+####### 
+
+# Confusion matrix for multiclass predictor
+lvls <- c('death','d','dl','h','hd','hdl','hl','l','other')
+FLUOXETINE_mat <- table(factor(multiTest_FLUOXETINE$predict, levels=lvls), multiTest_FLUOXETINE$level)
+# Precision for each class 
+FLUOXETINE_precision <- (precision <- diag(FLUOXETINE_mat) / rowSums(FLUOXETINE_mat))
+FLUOXETINE_precision
+# Recall for each class
+FLUOXETINE_recall <- (diag(FLUOXETINE_mat) / colSums(FLUOXETINE_mat))
+FLUOXETINE_recall
+
+#######
