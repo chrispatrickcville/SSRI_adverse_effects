@@ -441,3 +441,117 @@ FLUOXETINE_recall <- (diag(FLUOXETINE_mat) / colSums(FLUOXETINE_mat))
 FLUOXETINE_recall
 
 #######
+# Lasso usig binaryTrain_PAXIL
+binaryTrain_PAXIL.m <- as.matrix(binaryTrain_PAXIL)
+
+binaryTrain_PAXIL.lasso <- glmnet(binaryTrain_PAXIL.m [,-c(56)], 
+                                       binaryTrain_PAXIL.m [,c(56)], alpha=1, family="binomial")
+plot(binaryTrain_PAXIL.lasso ,xvar="lambda",label=TRUE)
+
+lamdas_to_try <- c(-7,-6,-5,-4.5)
+
+#predicting
+dummy <- binaryTest_PAXIL
+dummy$serious <- NULL
+dummy.m <- data.matrix(dummy)
+
+#NOTE: Make sure to explore appropriate log(lambda) value in the 's' parameter
+s <- exp(lamdas_to_try[2])
+binaryTest_PAXIL$predict <- predict(binaryTrain_PAXIL.lasso, newx=dummy.m, 
+                                         s=s, family="binomial", type="class")
+
+#checking accuracy of predictions
+sum(binaryTest_PAXIL$serious==binaryTest_PAXIL$predict)/nrow(binaryTest_PAXIL)
+table(binaryTest_PAXIL$predict)
+table(binaryTest_PAXIL$serious)
+
+#checking coefficients 
+#NOTE: make sure to match the 's' parameter to that in line 19
+options(scipen = 99)
+coef(binaryTrain_PAXIL.lasso, s=s)
+
+# Lambda = exp(-7), performance 0.6857143
+# Lambda = exp(-6), performance 0.688417 ** best performance
+# Lambda = exp(-5), performance 0.6864865 
+# Lambda = exp(-4.5), performance 0.6861004 
+
+#NAIVE model predicts the most frequent level  = 0.6853282
+table(binaryTrain_PAXIL$serious)
+sum(binaryTest_PAXIL$serious=='1')/nrow(binaryTest_PAXIL)
+
+library(ROCR)
+# model with best lambda
+s <- exp(lamdas_to_try[2])
+probs <- predict(binaryTrain_PAXIL.lasso, newx=dummy.m, s=s, family="binomial", type = "response")
+length(binaryTest_PAXIL$serious)
+length(probs)
+
+# ROCR prediction object and extract ROC curve and AUC
+prediction <- prediction(probs, binaryTest_PAXIL$serious)
+roc.curve <- performance(prediction,"tpr","fpr")
+auc = performance(prediction, "auc")@y.values[[1]]
+
+# plot
+plot(roc.curve, main = paste("ROC (AUC=", round(auc,2), ")", sep=""))
+abline(0, 1, lty="dashed")
+
+######################################################################
+
+###Lasso using multiTrain_PAXIL 
+#Training the 'LASSO'
+multiTrain_PAXIL.m <- as.matrix(multiTrain_PAXIL)
+
+multiTrain_PAXIL.lasso <- glmnet(multiTrain_PAXIL.m [,-c(56)], 
+                                      multiTrain_PAXIL.m [,c(56)], alpha=1, family="multinomial")
+plot(multiTrain_PAXIL.lasso ,xvar="lambda",label=TRUE)
+
+lamdas_to_try <- c(-4,-5.7,-6,-6.2,-8)
+
+#predicting
+dummy <- multiTest_PAXIL
+dummy$level <- NULL
+dummy.m <- data.matrix(dummy)
+
+#NOTE: Make sure to explore appropriate log(lambda) value in the 's' parameter
+s <- exp(lamdas_to_try[4])
+multiTest_PAXIL$predict <- predict(multiTrain_PAXIL.lasso, newx=dummy.m, 
+                                        s=s, family="multinomial", type="class")
+
+#checking accuracy of predictions
+sum(multiTest_PAXIL$level==multiTest_PAXIL$predict)/nrow(multiTest_PAXIL)
+table(multiTest_PAXIL$predict)
+table(multiTrain_PAXIL$level)
+
+#checking coefficients 
+#NOTE: make sure to match the 's' parameter to that in line 19
+coef(multiTrain_PAXIL.lasso, s=s)
+
+# Lambda = exp(-4), performance 0.4386181
+# Lambda = exp(-5), performance 0.4454041
+# Lambda = exp(-6), performance 0.446021
+# Lambda = exp(-6.2), performance 0.4466379 ** best
+# Lambda = exp(-8), performance 0.4423196
+
+#NAIVE model predicts the most frequent level  = 0.407773
+table(multiTrain_PAXIL$level)
+sum(multiTest_PAXIL$level=='other')/nrow(multiTest_PAXIL)
+
+####### 
+
+# Get confusion matrix for multiclass predictor
+lvls <- c('death','d','dl','h','hd','hdl','hl','l','other')
+PAXIL_mat <- table(factor(multiTest_PAXIL$predict, levels=lvls), multiTest_PAXIL$level)
+
+# Get precision for each class 
+PAXIL_precision <- (precision <- diag(PAXIL_mat) / rowSums(PAXIL_mat))
+PAXIL_precision
+# death         d        dl         h        hd       hdl        hl         l     other 
+# 0.2666667       NaN       NaN 0.4240232 0.2500000       NaN       NaN       NaN 0.4676180 
+
+# Get recall for each class
+PAXIL_recall <- (diag(PAXIL_mat) / colSums(PAXIL_mat))
+PAXIL_recall
+#      death          d         dl          h         hd        hdl         hl          l 
+# 0.02325581 0.00000000 0.00000000 0.45852895 0.02857143 0.00000000 0.00000000 0.00000000 
+# other 
+# 0.64447806 
