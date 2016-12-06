@@ -26,3 +26,26 @@ ggplot(datm,aes(x = variable, y = value,fill = Category)) +
   scale_y_continuous(labels = percent_format())+
   geom_text(data=posm, aes(x = variable, y = value, 
   label = paste(datm$value*100,"%")), size=6)+ ggtitle("Variable Distribution(%)")
+
+
+
+###########################################
+### Age and Weight Visualizations ###
+###########################################
+filename <- "dataFull.RDS"
+df<-readRDS(filename)
+
+summary(df$age)
+nrow(df[df$age<12 & !is.na(df$age),])/nrow(df) # 1.6% later removed for modeling
+
+hist(df$age, breaks=80,
+     main="Patient Onset Ages",
+     xlab="Onset Age (Years)",
+     col='blue',
+     border='grey')
+
+hist(df$patientweight, breaks=80,
+     main="Patient Onset Weight",
+     xlab="Onset Age (Years)",
+     col='blue',
+     border='grey')
